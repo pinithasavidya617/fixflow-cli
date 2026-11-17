@@ -1,0 +1,432 @@
+# FixFlow – Smart Repair Management System
+
+**FixFlow** is a Java command-line application designed to help an electronic device repair shop manage its daily operations. It provides customer and device records, repair tracking, technician assignment, spare-part inventory, payments, invoices, and operational reports.
+
+---
+
+## 1. Problem Statement
+
+Small electronic repair businesses may manage their work using paper records or separate spreadsheets. This can lead to:
+
+- Disorganized customer and device information.
+- Difficulty tracking the current status of repair jobs.
+- Unclear technician assignments and repair responsibilities.
+- Inaccurate spare-part stock records.
+- Confusion when recording deposits, partial payments, and final settlements.
+- Difficulty checking outstanding balances and business performance.
+
+FixFlow provides a single command-line system to organize these activities and retain records between application runs.
+
+## 2. Main Features
+
+### User Authentication
+
+- Login for Administrator and Technician user roles.
+- Role-based access to application operations.
+- Password change functionality.
+- Passwords are stored as BCrypt hashes rather than plain text.
+
+### Customer Management
+
+- Register and view customers.
+- Search and update customer records.
+- View customer-related information.
+- Apply validation when managing customer details.
+
+### Device Management
+
+- Register devices for existing customers.
+- Store device details such as type, brand, model, serial number, and warranty information.
+- View and search registered devices.
+- Check warranty status.
+
+### Technician Management
+
+- Register and view technicians.
+- Maintain technician specialization and active/inactive status.
+- Assign technicians to repair jobs.
+
+### Repair Management
+
+- Create and view repair jobs.
+- Associate repair jobs with customers and devices.
+- Assign technicians.
+- Record diagnosis findings, labour charges, estimated costs, and notes.
+- Update repair status while enforcing valid status transitions.
+- Prevent a device from being collected while a repair balance remains outstanding.
+
+The repair status values used by the application are:
+
+`RECEIVED`, `DIAGNOSING`, `IN_PROGRESS`, `COMPLETED`, `COLLECTED`, and `CANCELLED`.
+
+### Inventory Management
+
+- Register and view spare parts.
+- Maintain available stock quantities and reorder thresholds.
+- Issue spare parts to repair jobs.
+- Update inventory when parts are issued.
+- Prevent issuing more parts than are available.
+
+### Payments and Invoices
+
+- Record cash payments against repair jobs.
+- Support partial payments and outstanding balance calculations.
+- Validate payment amounts.
+- Generate PDF invoice receipts.
+
+### Reports
+
+- View repair and operational summaries.
+- Review repair-job counts by status.
+- View payment/revenue information.
+- Review low-stock and out-of-stock items.
+- View inventory valuation.
+
+---
+
+## 3. Technology Stack
+
+| Technology              | Purpose                           |
+| ----------------------- | --------------------------------- |
+| Java 21                 | Main programming language         |
+| Apache Maven            | Build and dependency management   |
+| Jackson Databind 2.18.1 | Reading and writing JSON data     |
+| jBCrypt 0.4             | Password hashing and verification |
+| Apache PDFBox 3.0.3     | PDF invoice generation            |
+| JUnit 5.11.3            | Unit testing                      |
+
+The application is terminal-based. It does not require a graphical user interface, SQLite, JDBC database connection, or a database server.
+
+---
+
+## 4. Requirements
+
+Before running the project, install:
+
+- **JDK 21 or later**
+- A terminal, Command Prompt, or PowerShell
+- Internet access for the first Maven dependency download, if dependencies are not already cached
+
+The project includes the Maven Wrapper, so a separate Maven installation is not normally required.
+
+Check the Java installation:
+
+```bash
+java -version
+```
+
+---
+
+## 5. Build and Run
+
+Open a terminal in the project root directory (the directory containing `pom.xml`).
+
+### Windows – PowerShell or Command Prompt
+
+Compile:
+
+```powershell
+.\mvnw.cmd clean compile
+```
+
+Run tests:
+
+```powershell
+.\mvnw.cmd test
+```
+
+Create the executable JAR:
+
+```powershell
+.\mvnw.cmd clean package
+```
+
+Run the packaged application:
+
+```powershell
+java -jar target\fixflow-1.0.0-executable.jar
+```
+
+### Linux or macOS
+
+Compile:
+
+```bash
+./mvnw clean compile
+```
+
+Run tests:
+
+```bash
+./mvnw test
+```
+
+Create the executable JAR:
+
+```bash
+./mvnw clean package
+```
+
+Run the packaged application:
+
+```bash
+java -jar target/fixflow-1.0.0-executable.jar
+```
+
+The executable JAR is created by the Maven Shade Plugin and includes the required runtime dependencies.
+
+---
+
+## 6. First Run and Demo Accounts
+
+The application uses the `data/` directory in the project working directory to store its JSON files.
+
+On startup, `Main` calls `DataSeeder.seedIfEmpty(...)` to initialize demo data through the repositories when the relevant data collections are empty. This allows the application to be explored without manually entering every initial record.
+
+The seeded demo accounts are:
+
+| Role          | Username | Password   |
+| ------------- | -------- | ---------- |
+| Administrator | `admin`  | `admin123` |
+| Technician    | `tech1`  | `tech123`  |
+
+These are demonstration credentials. Change the passwords when using the application for a demonstration that requires customized accounts.
+
+**Important:** The JSON files contain the application's saved records. Do not delete or replace them if you need to preserve data entered during a previous run.
+
+---
+
+## 7. JSON File Persistence
+
+FixFlow stores application data in separate JSON files under the project-root `data/` directory.
+
+| File               | Stored information                           |
+| ------------------ | -------------------------------------------- |
+| `customers.json`   | Customer records                             |
+| `devices.json`     | Registered devices                           |
+| `technicians.json` | Technician profiles                          |
+| `users.json`       | User accounts and password hashes            |
+| `repair_jobs.json` | Repair jobs and their current details/status |
+| `spare_parts.json` | Spare-part catalogue and stock quantities    |
+| `part_usage.json`  | Spare parts issued to repair jobs            |
+| `payments.json`    | Payment transactions                         |
+
+### How persistence works
+
+1. Repository classes use the shared `JsonFileHandler` to read and write JSON files.
+2. When repository objects are initialized, their stored records are loaded into Java collections.
+3. When a successful operation adds, updates, or deletes a record, the relevant repository saves the updated collection to its JSON file.
+4. The next time the application starts, the saved records are loaded again.
+
+This means the data remains available after the application is closed and restarted.
+
+JSON files are suitable for this small, single-application assignment demonstration. They are not intended to provide the transaction handling, concurrent access control, or relational constraints of a production database.
+
+---
+
+## 8. Project Structure
+
+The main source code is organized into packages according to responsibility.
+
+```text
+fixflow/
+├── data/
+│   ├── customers.json
+│   ├── devices.json
+│   ├── technicians.json
+│   ├── users.json
+│   ├── repair_jobs.json
+│   ├── spare_parts.json
+│   ├── part_usage.json
+│   └── payments.json
+│
+├── src/
+│   ├── main/
+│   │   └── java/com/fixflow/
+│   │       ├── Main.java
+│   │       ├── cli/
+│   │       ├── enums/
+│   │       ├── exception/
+│   │       ├── model/
+│   │       ├── repository/
+│   │       ├── service/
+│   │       └── util/
+│   │
+│   └── test/
+│       └── java/com/fixflow/
+│           ├── enums/
+│           ├── model/
+│           ├── repository/
+│           ├── service/
+│           └── util/
+│
+├── pom.xml
+├── mvnw
+├── mvnw.cmd
+└── README.md
+```
+
+### Package responsibilities
+
+| Package      | Responsibility                                                                                                   |
+| ------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `cli`        | Terminal menus and user input                                                                                    |
+| `model`      | Application entities and domain objects                                                                          |
+| `enums`      | Fixed values such as repair status, payment status, and user roles                                               |
+| `repository` | Data access and JSON-backed record management                                                                    |
+| `service`    | Application operations and business rules                                                                        |
+| `exception`  | Custom exceptions for invalid business operations                                                                |
+| `util`       | Shared utilities such as JSON handling, validation, sessions, password hashing, data seeding, and PDF generation |
+
+### Important classes
+
+**Models**
+
+- `User`, `AdminUser`, `TechnicianUser`
+- `Customer`, `Device`, `Technician`
+- `RepairJob`, `SparePart`, `RepairPartUsage`, `Payment`
+- `DashboardMetrics`
+
+**Repositories**
+
+- `Repository`
+- `UserRepository`
+- `CustomerRepository`
+- `DeviceRepository`
+- `TechnicianRepository`
+- `RepairRepository`
+- `InventoryRepository`
+- `PartUsageRepository`
+- `PaymentRepository`
+
+**Services**
+
+- `UserService`
+- `CustomerService`
+- `DeviceService`
+- `TechnicianService`
+- `RepairService`
+- `InventoryService`
+- `PaymentService`
+- `ReportService`
+
+**Utilities and exceptions**
+
+- `JsonFileHandler`
+- `DataSeeder`
+- `PasswordUtil`
+- `SessionManager`
+- `ValidationUtil`
+- `PdfInvoiceGenerator`
+- `InsufficientStockException`
+- `InvalidStatusTransitionException`
+
+---
+
+## 9. Object-Oriented Programming Concepts
+
+The project demonstrates the OOP concepts required by the assignment.
+
+| OOP concept              | How it is demonstrated                                                                                                             | Relevant classes                                                                                             |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Encapsulation            | Model fields are private and accessed through methods. Domain methods also control or validate state changes.                      | `Customer`, `Device`, `SparePart`, `RepairJob`, `Payment`                                                    |
+| Abstraction              | The abstract `User` class defines common user information and abstract role-related operations.                                    | `User`                                                                                                       |
+| Inheritance              | Specific user types inherit common fields and behaviour from `User`.                                                               | `AdminUser`, `TechnicianUser`                                                                                |
+| Polymorphism             | User subclasses provide their own implementations of role-related methods. The application calls these through a `User` reference. | `User`, `AdminUser`, `TechnicianUser`, `MainMenu`                                                            |
+| Exception Handling       | Custom exceptions represent invalid business operations and are handled by the application.                                        | `InsufficientStockException`, `InvalidStatusTransitionException`, `InventoryService`, `RepairJob`, CLI menus |
+| Collections and Generics | Repositories manage lists of typed model objects using `List<T>` and `ArrayList<T>`.                                               | `Repository<T>` and concrete repository classes                                                              |
+| File Handling            | Application data is read from and written to JSON files.                                                                           | `JsonFileHandler`, repository classes                                                                        |
+| Interfaces and Packages  | A repository interface defines common data operations, and packages separate application responsibilities.                         | `Repository<T>`, `repository`, `model`, `service`, `cli`, `util`, `exception`, `enums`                       |
+
+### Examples for the viva
+
+**Inheritance**
+
+`AdminUser` and `TechnicianUser` extend the abstract `User` class.
+
+**Polymorphism**
+
+The application stores the authenticated account as a `User` reference and calls methods such as `getRoleDescription()` and `canManageTechnicians()`. The implementation that runs depends on the actual user object.
+
+**Generics**
+
+The repository interface uses a type parameter:
+
+```java
+public interface Repository<T> {
+    void add(T item);
+    T findById(int id);
+    List<T> findAll();
+}
+```
+
+**Exception handling**
+
+- `InsufficientStockException` is used when a requested spare-part quantity cannot be issued.
+- `InvalidStatusTransitionException` is used when a repair status change is not permitted.
+
+**File handling**
+
+`JsonFileHandler` provides the shared JSON loading and saving operations used by repositories.
+
+---
+
+## 10. Example Demonstration Workflow
+
+A useful presentation demonstration is to follow one repair from customer registration to collection.
+
+1. Log in using the Administrator demo account.
+2. Register a customer.
+3. Register a device for that customer.
+4. Create a repair job for the device.
+5. Assign an active technician.
+6. Record diagnosis findings and labour charges.
+7. Update the repair status through the permitted lifecycle.
+8. Issue a spare part to the repair job and show the stock quantity changing.
+9. Record one or more payments.
+10. Show the remaining balance and payment status.
+11. Complete the payment and collect the repaired device, subject to the application's collection rule.
+12. Generate a PDF invoice receipt.
+13. Open the relevant JSON files to show that the records were saved.
+
+For the exception-handling demonstration, try issuing more spare parts than the available stock or attempting an invalid repair status transition. The application should display an understandable error instead of performing the invalid operation.
+
+---
+
+## 11. Testing
+
+JUnit 5 tests are located under:
+
+```text
+src/test/java/com/fixflow/
+```
+
+Run all tests with:
+
+```bash
+.\mvnw.cmd test
+```
+
+The test packages cover areas such as:
+
+- Enums and repair status transitions.
+- JSON persistence.
+- Customer, inventory, payment, repair, and user services.
+- Password utilities.
+- Session management.
+- Validation.
+- PDF invoice generation.
+
+Tests should be run before the final presentation to check that the application behaves as expected.
+
+---
+
+## 12. Limitations and Scope
+
+- **Single local application:** The project is intended for a local command-line demonstration, not simultaneous use by multiple repair-shop workstations.
+- **JSON storage:** JSON files do not provide relational database transactions or database-level concurrent access control.
+- **Payment method:** The current payment workflow focuses on cash payment records.
+- **Terminal interface:** The application uses text menus rather than a graphical interface.
+- **Demonstration data:** Initial demo records are provided to make it easier to explore the application.
+
+---
