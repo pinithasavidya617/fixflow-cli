@@ -1,4 +1,4 @@
-package repository;
+package com.fixflow.repository;
 
 import com.fixflow.enums.RepairStatus;
 import com.fixflow.model.Customer;
