@@ -1,4 +1,5 @@
-import com.fixflow.util.ValidationUtil;
+package com.fixflow.util;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
