@@ -91,7 +91,7 @@ public class TechnicianService {
             return false;
         }
 
-        // Check if technician has assigned repair jobs that are not completed/cancelled
+
         List<RepairJob> jobs = repairRepo.findByTechnicianId(id);
         for (RepairJob j : jobs) {
             if (!j.getCurrentStatus().isTerminal()) {
