@@ -3,8 +3,8 @@ package com.fixflow.cli;
 import com.fixflow.enums.PaymentStatus;
 import com.fixflow.enums.RepairStatus;
 import com.fixflow.exception.InvalidStatusTransitionException;
-import com.fixflow.model.RepairJob;
-import com.fixflow.service.RepairService;
+import com.fixflow.model.*;
+import com.fixflow.service.*;
 
 import java.util.List;
 import java.util.Set;
